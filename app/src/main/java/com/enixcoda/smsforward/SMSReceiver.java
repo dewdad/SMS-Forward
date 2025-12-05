@@ -57,13 +57,15 @@ public class SMSReceiver extends BroadcastReceiver {
         for (Object messageObj : pduObjects) {
             SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) messageObj, (String) bundle.get("format"));
             String senderNumber = currentMessage.getDisplayOriginatingAddress();
+            String senderName = ContactUtils.getContactName(context, senderNumber);
             String rawMessageContent = currentMessage.getDisplayMessageBody();
 
             if (senderNumber.equals(smsPreferences.getTargetNumber())) {
                 // reverse message
                 String formatRegex = "To (\\+?\\d+?):\\n((.|\\n)*)";
                 if (rawMessageContent.matches(formatRegex)) {
-                    String forwardNumber = rawMessageContent.replaceFirst(formatRegex, "$1");
+                    String forwardNumber = rawMessageContent.replaceFirst(formatRegex, "$1
+");
                     String forwardContent = rawMessageContent.replaceFirst(formatRegex, "$2");
                     Forwarder.sendSMS(forwardNumber, forwardContent);
                 }
@@ -72,32 +74,32 @@ public class SMSReceiver extends BroadcastReceiver {
 
                 if (smsPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding SMS to " + smsPreferences.getTargetNumber());
-                    Forwarder.forwardViaSMS(senderNumber, rawMessageContent, smsPreferences.getTargetNumber());
+                    Forwarder.forwardViaSMS(senderNumber, senderName, rawMessageContent, smsPreferences.getTargetNumber());
                 }
 
                 if (telegramPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding Telegram to " + telegramPreferences.getTargetTelegram());
-                    Forwarder.forwardViaTelegram(senderNumber, rawMessageContent, telegramPreferences.getTargetTelegram(), telegramPreferences.getTelegramToken());
+                    Forwarder.forwardViaTelegram(senderNumber, senderName, rawMessageContent, telegramPreferences.getTargetTelegram(), telegramPreferences.getTelegramToken());
                 }
 
                 if (rocketChatPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding RocketChat to " + rocketChatPreferences.getRocketChatChannel());
-                    Forwarder.forwardViaRocketChat(rocketChatPreferences.getRocketChatBaseUrl(), rocketChatPreferences.getRocketChatUserId(), rocketChatPreferences.getRocketChatToken(), rocketChatPreferences.getRocketChatChannel());
+                    Forwarder.forwardViaRocketChat(senderNumber, senderName, rawMessageContent, rocketChatPreferences.getRocketChatBaseUrl(), rocketChatPreferences.getRocketChatUserId(), rocketChatPreferences.getRocketChatToken(), rocketChatPreferences.getRocketChatChannel());
                 }
 
                 if (twilioPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding Twilio to " + twilioPreferences.getTwilioToNumber());
-                    Forwarder.forwardViaTwilio(twilioPreferences.getTwilioAccountSid(), twilioPreferences.getTwilioAuthToken(), twilioPreferences.getTwilioFromNumber(), twilioPreferences.getTwilioToNumber(), rawMessageContent);
+                    Forwarder.forwardViaTwilio(senderNumber, senderName, twilioPreferences.getTwilioAccountSid(), twilioPreferences.getTwilioAuthToken(), twilioPreferences.getTwilioFromNumber(), twilioPreferences.getTwilioToNumber(), rawMessageContent);
                 }
 
                 if (webPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding Web to " + webPreferences.getTargetWeb());
-                    Forwarder.forwardViaWeb(senderNumber, rawMessageContent, webPreferences.getTargetWeb());
+                    Forwarder.forwardViaWeb(senderNumber, senderName, rawMessageContent, webPreferences.getTargetWeb());
                 }
 
                 if (webPreferences.isValid()) {
                     Log.d("SMSReceiver", "onReceive: Forwarding Email to " + emailPreferences.getToEmail());
-                    Forwarder.forwardViaEmail(senderNumber, rawMessageContent, emailPreferences);
+                    Forwarder.forwardViaEmail(senderNumber, senderName, rawMessageContent, emailPreferences);
                 }
             }
         }

@@ -11,8 +11,9 @@ public class Forwarder {
         smsManager.sendTextMessage(number, null, content, null, null);
     }
 
-    public static void forwardViaSMS(String senderNumber, String forwardContent, String forwardNumber) {
-        String forwardPrefix = String.format("From %s:\n", senderNumber);
+    public static void forwardViaSMS(String senderNumber, String senderName, String forwardContent, String forwardNumber) {
+        String sender = senderName == null ? senderNumber : senderName + " (" + senderNumber + ")";
+        String forwardPrefix = String.format("From %s:\n", sender);
 
         try {
             if ((forwardPrefix + forwardContent).getBytes().length > MAX_SMS_LENGTH) {
@@ -28,24 +29,26 @@ public class Forwarder {
         }
     }
 
-    public static void forwardViaTelegram(String senderNumber, String message, String targetTelegramID, String telegramToken) {
-        new ForwardTaskForTelegram(senderNumber, message, targetTelegramID, telegramToken).execute();
+    public static void forwardViaTelegram(String senderNumber, String senderName, String message, String targetTelegramID, String telegramToken) {
+        new ForwardTaskForTelegram(senderNumber, senderName, message, targetTelegramID, telegramToken).execute();
     }
 
-    public static void forwardViaRocketChat(String baseUrl, String userId, String token, String channel) {
-        new ForwardTaskForRocketChat(baseUrl, userId, token, channel).execute();
+    public static void forwardViaRocketChat(String senderNumber, String senderName, String message, String baseUrl, String userId, String token, String channel) {
+        new ForwardTaskForRocketChat(senderNumber, senderName, message, baseUrl, userId, token, channel).execute();
     }
 
-    public static void forwardViaTwilio(String accountSid, String authToken, String fromNumber, String toNumber, String message) {
-        ForwardTaskForTwilio forwardTaskForTwilio = new ForwardTaskForTwilio(accountSid, authToken, fromNumber, toNumber, message);
+    public static void forwardViaTwilio(String senderNumber, String senderName, String accountSid, String authToken, String fromNumber, String toNumber, String message) {
+        String sender = senderName == null ? senderNumber : senderName + " (" + senderNumber + ")";
+        ForwardTaskForTwilio forwardTaskForTwilio = new ForwardTaskForTwilio(accountSid, authToken, fromNumber, toNumber, "From " + sender + ":\n" + message);
         forwardTaskForTwilio.sendTwilioSms();
     }
 
-    public static void forwardViaWeb(String senderNumber, String message, String endpoint) {
-        new ForwardTaskForWeb(senderNumber, message, endpoint).send();
+    public static void forwardViaWeb(String senderNumber, String senderName, String message, String endpoint) {
+        new ForwardTaskForWeb(senderNumber, senderName, message, endpoint).send();
     }
 
-    public static void forwardViaEmail(String senderNumber, String message, EmailPreferences emailPref) {
+    public static void forwardViaEmail(String senderNumber, String senderName, String message, EmailPreferences emailPref) {
+        String sender = senderName == null ? senderNumber : senderName + " (" + senderNumber + ")";
         new ForwardTaskForEmail(
                 emailPref.getSmtpHost(),
                 emailPref.getSmtpPort(),
@@ -53,7 +56,7 @@ public class Forwarder {
                 emailPref.getSmtpPassword(),
                 emailPref.getFromEmail(),
                 emailPref.getToEmail(),
-                "Forwarded SMS message from " + senderNumber,
+                "Forwarded SMS message from " + sender,
                 message
         ).send();
     }
